@@ -2,7 +2,7 @@
 #!nix-shell -i coconut-run ./shell.nix
 import responses
 import json
-import glom
+from glom import glom
 from pprint import pprint
 
 def factorial(0) = 1
@@ -59,14 +59,54 @@ def test_request():
 	raw_text |> json.loads |?> .get('slidesho') |?> .get('title') |> assertEq(None)
 
 	# equivalent glom
-	slide_title_get = t -> glom.glom(t,'slideshow.title', default=None)
+	slide_title_get = t -> glom(t,'slideshow.title', default=None)
 	raw_text |> json.loads |?> slide_title_get |> assertEq("Sample Slide Show")
 
-	bad_slide_title_get = t -> glom.glom(t,'slideshow.titl', default=None)
+	bad_slide_title_get = t -> glom(t,'slideshow.titl', default=None)
 	raw_text |> json.loads |?> bad_slide_title_get |> assertEq(None)
 
 	# failing coconut traversal
 	raw_text |> json.loads |?> .get('title') |> assertEq(None)
+
+@responses.activate
+def test_many_requests():
+	import requests 
+	output = """
+	{
+		"slideshow": {
+			"author": "Yours Truly",
+			"date": "date of publication",
+			"slides": [
+				{
+					"title": "Wake up to WonderWidgets!",
+					"type": "all"
+				},
+				{
+					"items": [
+					"Why <em>WonderWidgets</em> are great",
+					"Who <em>buys</em> WonderWidgets"
+					],
+					"title": "Overview",
+					"type": "all"
+				}
+			],
+			"title": "Sample Slide Show"
+		}
+	}
+	"""
+	# mock response
+	responses.add(responses.GET, 'https://httpbingo.org/json', status=200, json=json.loads(output))
+
+	# how to get raw text from endpoint
+	raw_text = "https://httpbingo.org/json" |> requests.get |> .text
+	get_data = (-> "https://httpbingo.org/json" |> requests.get |> .text)
+
+	# assert mock and raw text equivalent
+	assertJSONEq(output)(raw_text)
+	# make sure mock was hit instead of real endpoint
+	assert len(responses.calls) == 1
+	output = concurrent_map(get_data, range(200), chunksize=1) |> list
+	assert len(responses.calls) == 201
 
 
 
