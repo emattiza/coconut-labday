@@ -1,0 +1,4 @@
+tasks:
+  - name: Run Pytest and Coconut
+    command: |
+      nix-shell --run 'fd "basic.coco|shell.nix" | entr -s "nix-shell --run \"./basic.coco; pytest basic.py\""'
