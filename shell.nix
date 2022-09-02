@@ -6,6 +6,10 @@ in
       coconut
       entr
       fd
+      starship
       pythonEnv
     ];
+    shellHook = ''
+    source <(starship init bash --print-full-init)
+    '';
   }
