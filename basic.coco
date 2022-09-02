@@ -108,11 +108,16 @@ def test_many_requests():
 	output = concurrent_map(get_data, range(200), chunksize=1) |> list
 	assert len(responses.calls) == 201
 
-raw_ulid = "https://uuid.rocks/ulid" |> requests.get |> .text |> ulid.parse
-raw_time = raw_ulid |> .timestamp() |> .datetime |> .isoformat()
-raw_rand = raw_ulid |> .randomness() |> .bytes
-raw_time |> pprint
-raw_rand |> pprint
+@responses.activate
+def test_ulid():
+	responses.add(responses.GET, "https://uuid.rocks/ulid", status=200, body="01GBZTTRREHC2JZGZF7SGTVPTQ")
+	raw_ulid = "https://uuid.rocks/ulid" |> requests.get |> .text |> ulid.parse
+	raw_time = raw_ulid |> .timestamp() |> .datetime |> .isoformat()
+	raw_rand = raw_ulid |> .randomness() |> .bytes
+	raw_time |> pprint
+	raw_rand |> pprint
+	# make sure mock was hit instead of real endpoint
+	assert len(responses.calls) == 1
 
 
 
