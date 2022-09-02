@@ -7,3 +7,5 @@ tasks:
 vscode:
   extensions:
     - evhub.coconut
+    - kamadorueda.alejandra
+    - bbenoist.Nix
